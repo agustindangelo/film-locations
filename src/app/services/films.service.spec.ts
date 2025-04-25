@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FilmsService } from './films.service';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { environment } from '../../environments/environment';
 
 describe('FilmsService', () => {
@@ -10,7 +10,7 @@ describe('FilmsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [],
+      imports: [HttpClientTestingModule],
       providers: [FilmsService]
     });
     service = TestBed.inject(FilmsService);
