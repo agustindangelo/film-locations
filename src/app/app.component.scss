@@ -1,0 +1,24 @@
+@use '@angular/material' as mat;
+.main {
+  display: flex;
+  justify-content: center;
+  padding: 25px;
+}
+
+.content {
+  padding: 16px;
+  width: 100%;
+  max-width: 1200px;
+  background-color: var(--mat-sys-background);
+}
+
+.rounded-card {
+  border-radius: 16px;
+  padding: 25px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.full-width {
+  width: 100%;
+}

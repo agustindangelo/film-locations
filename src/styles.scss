@@ -1,1 +1,65 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: Roboto,
+      theme-type: light,
+      density: 0
+    ),
+    $overrides: ('background': #f4efff)
+  );
+}
+
+.darkMode {
+  height: 100%;
+  color-scheme: dark;
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      theme-type: dark,
+      density: 0
+    ),
+    $overrides: ('background': #24292e)
+  );
+}
+
+body {
+  // background: var(--mat-sys-surface);
+  // color: var(--mat-sys-on-surface);
+
+  height: 100%;
+
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
+
+// @use '@angular/material' as mat;
+
+// // Define your custom palettes (you can use built-ins or create your own)
+// $primary-palette: mat.define-palette(mat.$indigo-palette);
+// $accent-palette: mat.define-palette(mat.$pink-palette);
+
+// // Define a Material 3 light theme
+// $my-light-theme: mat.define-theme(
+//   (
+//     color: (
+//       theme-type: light,
+//       primary: $primary-palette,
+//       secondary: $accent-palette,
+//       // <-- this is your "accent" color
+//     ),
+//     typography: mat.define-typography-config(),
+//     // optional, you can customize
+//     density: 0
+//   )
+// );
+
+// // Apply the theme and design tokens globally
+// :root {
+//   @include mat.all-component-themes($my-light-theme);
+// }

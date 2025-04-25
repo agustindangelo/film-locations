@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>{{ filmLocation.title }}</h2>
+<mat-dialog-content class="dialog-content">
+    <p *ngIf="filmLocation.releaseYear"><strong>Release Year:</strong> {{ filmLocation.releaseYear }}</p>
+    <p><strong>Actors:</strong> {{ actorList.join(', ') }}</p>
+    <p *ngIf="filmLocation.writer"><strong>Writer:</strong> {{ filmLocation.writer }}</p>
+    <p *ngIf="filmLocation.director"><strong>Director:</strong> {{ filmLocation.director }}</p>
+    <p *ngIf="filmLocation.locations"><strong>Location:</strong> {{ filmLocation.locations }}</p>
+    <p *ngIf="filmLocation.productionCompany"><strong>Production Company:</strong> {{ filmLocation.productionCompany }}</p>
+    <p *ngIf="filmLocation.funFacts"><strong>Fun facts:</strong> {{ filmLocation.funFacts }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>
+
