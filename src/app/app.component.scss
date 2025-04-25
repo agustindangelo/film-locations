@@ -4,12 +4,14 @@
   justify-content: center;
   padding: 25px;
   background-color: var(--mat-sys-background);
+  height: 100%;
 }
 
 .content {
   padding: 16px;
   width: 100%;
   max-width: 1200px;
+  max-height: 750px;
 }
 
 mat-form-field {

@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '',
-  googleMapsApiKey: 'AIzaSyB8aipFGIWiOsneCAu1JkfKmBDav_GWujk'
+  apiBaseUrl:
+    'https://film-locations-service-d3cgfcdkdrfxake6.canadacentral-01.azurewebsites.net/api',
+  googleMapsApiKey: 'SECRET_PLACEHOLDER'
 };
