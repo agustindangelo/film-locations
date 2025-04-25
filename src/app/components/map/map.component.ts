@@ -15,8 +15,6 @@ import { Marker } from '../../models/Marker';
   styleUrl: './map.component.scss'
 })
 export class MapComponent {
-  private filmsService = inject(FilmsService);
-
   readonly SF_CENTER_LAT = 37.784279;
   readonly SF_CENTER_LNG = -122.407234;
   mapOptions: google.maps.MapOptions = {
@@ -29,13 +27,12 @@ export class MapComponent {
       }
     ]
   };
-
-  @Input() filmLocations: Film[] = [];
-
   markers: Marker[] = [];
   center = { lat: this.SF_CENTER_LAT, lng: this.SF_CENTER_LNG };
-  zoom = 12;
+  zoom = 13;
   selectedLocation: Film | null = null;
+  private filmsService = inject(FilmsService);
+  @Input() filmLocations: Film[] = [];
 
   get actorList(): (string | undefined)[] {
     return [

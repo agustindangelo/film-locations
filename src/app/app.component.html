@@ -10,9 +10,10 @@
         [formControl]="searchControl"
         data-testid="search-box"
         [matAutocomplete]="auto"
+        placeholder="Examples: The Bachelor, Godzilla"
       />
       <mat-error *ngIf="searchControl.hasError('maxlength')">
-        Search query cannot be longer than 25 characters.
+        Search query cannot be longer than 45 characters.
       </mat-error>
     </mat-form-field>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
@@ -22,7 +23,9 @@
         </mat-option>
       </ng-container>
       <ng-template #noResults>
-        <mat-option disabled> Oops. There aren't any films matching your search. </mat-option>
+        <mat-option disabled *ngIf="searchControl.value?.trim() && !loading">
+          Oops. There aren't any films matching your search.
+        </mat-option>
       </ng-template>
     </mat-autocomplete>
     <app-map [filmLocations]="filteredFilmLocations"></app-map>

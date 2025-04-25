@@ -3,13 +3,17 @@
   display: flex;
   justify-content: center;
   padding: 25px;
+  background-color: var(--mat-sys-background);
 }
 
 .content {
   padding: 16px;
   width: 100%;
   max-width: 1200px;
-  background-color: var(--mat-sys-background);
+}
+
+mat-form-field {
+  margin-bottom: 8px;
 }
 
 .rounded-card {

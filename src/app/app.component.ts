@@ -1,19 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MapComponent } from './components/map/map.component';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  finalize,
-  Observable,
-  of,
-  Subject,
-  Subscription,
-  switchMap,
-  takeUntil
-} from 'rxjs';
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent
+} from '@angular/material/autocomplete';
+import { catchError, debounceTime, distinctUntilChanged, filter, finalize, of } from 'rxjs';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FilmsService } from './services/films.service';
 import { Film } from './models/Film';
@@ -41,88 +32,42 @@ import { TopBarComponent } from './components/top-bar/top-bar.component';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  searchControl = new FormControl('', [Validators.maxLength(25)]);
-  options$: Observable<Film[]> | undefined;
-  subscriptions: Subscription[] = [];
+  searchControl = new FormControl('', [Validators.maxLength(45)]);
   searchResults: Film[] = [];
   filmLocations: Film[] = [];
-  initialOptions: Film[] = [];
   filteredFilmLocations: Film[] = [];
   options: Film[] = [];
   loading = false;
-  private destroy$ = new Subject<void>();
 
-  constructor(private filmsService: FilmsService) {}
+  private filmsService = inject(FilmsService);
 
   ngOnInit() {
-    this.fetchTopFilms();
     this.setupSearchSubscription();
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private fetchTopFilms(): void {
-    this.loading = true;
-    this.filmsService
-      .fetchTopFilms()
-      .pipe(
-        catchError((error) => {
-          console.error('Error fetching films', error);
-          return of([]);
-        }),
-        finalize(() => (this.loading = false)),
-        takeUntil(this.destroy$)
-      )
-      .subscribe((data) => {
-        this.filmLocations = data;
-        this.options = this.getUniqueResults(data);
-        this.initialOptions = this.options;
-      });
-  }
-
   setupSearchSubscription() {
-    this.subscriptions.push(
-      this.searchControl.valueChanges
-        .pipe(
-          debounceTime(500),
-          distinctUntilChanged(),
-          takeUntil(this.destroy$),
-          filter((query) => !!query)
-        )
-        .subscribe((query) => {
-          this.loading = true;
-          this.filmsService
-            .search(query!)
-            .pipe(
-              catchError((error) => {
-                console.error('Error searching films', error);
-                return of([]);
-              }),
-              finalize(() => (this.loading = false))
-            )
-            .subscribe((data) => {
-              this.filmLocations = data;
-              this.options = this.getUniqueResults(data);
-            });
-        })
-    );
-
-    this.subscriptions.push(
-      this.searchControl.valueChanges
-        .pipe(
-          debounceTime(500),
-          distinctUntilChanged(),
-          takeUntil(this.destroy$),
-          filter((query) => !query)
-        )
-        .subscribe(() => {
-          this.options = this.initialOptions;
-        })
-    );
+    this.searchControl.valueChanges
+      .pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        filter((query) => !!query && query.trim().length > 0)
+      )
+      .subscribe((query) => {
+        this.loading = true;
+        this.filmsService
+          .search(query!)
+          .pipe(
+            catchError((err) => {
+              console.error('Search error', err);
+              return of([]);
+            }),
+            finalize(() => (this.loading = false))
+          )
+          .subscribe((data) => {
+            this.filmLocations = data as Film[];
+            this.options = this.getUniqueResults(this.filmLocations);
+          });
+      });
   }
 
   getUniqueResults(results: Film[]): Film[] {
@@ -136,10 +81,12 @@ export class AppComponent {
     });
   }
 
-  onOptionSelected(event: any): void {
-    const selectedFilm = event.option.value;
+  onOptionSelected(event: MatAutocompleteSelectedEvent): void {
+    const selectedTitle = event.option.value;
+    this.searchControl.setValue(selectedTitle, { emitEvent: true });
     this.filteredFilmLocations = this.filmLocations.filter(
-      (location) => location.title === selectedFilm
+      (location) => location.title === selectedTitle
     );
+    console.log('filtered', this.filteredFilmLocations);
   }
 }

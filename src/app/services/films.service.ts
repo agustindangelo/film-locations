@@ -15,10 +15,6 @@ export class FilmsService {
 
   constructor() {}
 
-  fetchTopFilms(): Observable<Film[]> {
-    return this.http.get<Film[]>(this.filmsUrl, { params: { pageSize: 100 } });
-  }
-
   search(title: string): Observable<Film[]> {
     if (!title) return new Observable((observer) => observer.next([]));
     return this.http.get<any>(this.searchUrl, { params: { title: title.trim() } });
