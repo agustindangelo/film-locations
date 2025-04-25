@@ -7,6 +7,7 @@ import { FilmsService } from '../../services/films.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DetailsModalComponent } from '../details-modal/details-modal.component';
 import { Marker } from '../../models/Marker';
+import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 
 @Component({
   selector: 'app-map',
@@ -31,6 +32,7 @@ export class MapComponent {
   center = { lat: this.SF_CENTER_LAT, lng: this.SF_CENTER_LNG };
   zoom = 13;
   selectedLocation: Film | null = null;
+  apiLoaded = false;
   private filmsService = inject(FilmsService);
   @Input() filmLocations: Film[] = [];
 
@@ -42,9 +44,14 @@ export class MapComponent {
     ].filter((actor) => !!actor);
   }
 
+  private mapsLoader = inject(GoogleMapsLoaderService);
+
   constructor(public dialog: MatDialog) {}
 
-  ngOnInit() {}
+  async ngOnInit() {
+    await this.mapsLoader.load();
+    this.apiLoaded = true;
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['filmLocations'] && !changes['filmLocations'].firstChange) {

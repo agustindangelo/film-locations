@@ -14,12 +14,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { TopBarComponent } from './components/top-bar/top-bar.component';
+import { GoogleMapsModule } from '@angular/google-maps';
 
 @Component({
   selector: 'app-root',
   imports: [
     CommonModule,
     MapComponent,
+    GoogleMapsModule,
     MatAutocompleteModule,
     LoadingSpinnerComponent,
     MatCardModule,
