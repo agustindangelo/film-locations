@@ -33,7 +33,8 @@ jobs:
 
       - name: Replace environment variable
         run: |
-          sed -i "s|SECRET_PLACEHOLDER|${{ secrets.GOOGLE_MAPS_API_KEY }}|g" src/environments/environment.prod.ts
+          sed -i "s|SECRET_PLACEHOLDER|$(printf '%s\n' "${{ secrets.GOOGLE_MAPS_API_KEY }}" | sed -e 's/[\/&]/\\&/g')|g" src/environments/environment.ts
+          sed -i "s|SECRET_PLACEHOLDER|$(printf '%s\n' "${{ secrets.GOOGLE_MAPS_API_KEY }}" | sed -e 's/[\/&]/\\&/g')|g" src/environments/environment.prod.ts
 
       - name: Build And Deploy
         id: builddeploy
