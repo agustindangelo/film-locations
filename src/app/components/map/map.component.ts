@@ -1,4 +1,4 @@
-import { Component, inject, Input, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Film } from '../../models/Film';
 import { CommonModule } from '@angular/common';
@@ -8,6 +8,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DetailsModalComponent } from '../details-modal/details-modal.component';
 import { Marker } from '../../models/Marker';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
+import { Observable, map } from 'rxjs';
 
 @Component({
   selector: 'app-map',
@@ -28,21 +29,14 @@ export class MapComponent {
       }
     ]
   };
-  markers: Marker[] = [];
   center = { lat: this.SF_CENTER_LAT, lng: this.SF_CENTER_LNG };
   zoom = 13;
   selectedLocation: Film | null = null;
   apiLoaded = false;
   private filmsService = inject(FilmsService);
-  @Input() filmLocations: Film[] = [];
+  @Input() filmLocations$!: Observable<Film[]>;
 
-  get actorList(): (string | undefined)[] {
-    return [
-      this.selectedLocation!.actor1,
-      this.selectedLocation!.actor2,
-      this.selectedLocation!.actor3
-    ].filter((actor) => !!actor);
-  }
+  markers$!: Observable<Marker[]>;
 
   private mapsLoader = inject(GoogleMapsLoaderService);
 
@@ -51,23 +45,35 @@ export class MapComponent {
   async ngOnInit() {
     await this.mapsLoader.load();
     this.apiLoaded = true;
+
+    this.markers$ = this.filmLocations$.pipe(
+      map((films) =>
+        films.map(
+          (film) =>
+            ({
+              position: { lat: +film.latitude!, lng: +film.longitude! },
+              film: film
+            } as Marker)
+        )
+      )
+    );
+
+    this.filmLocations$.subscribe((films) => {
+      if (films.length > 0) {
+        this.center = {
+          lat: films.reduce((sum, film) => sum + film.latitude!, 0) / films.length,
+          lng: films.reduce((sum, film) => sum + film.longitude!, 0) / films.length
+        };
+      }
+    });
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['filmLocations'] && !changes['filmLocations'].firstChange) {
-      this.updateMarkers();
-      this.adjustMapCenter();
-    }
-  }
-
-  updateMarkers() {
-    this.markers = [];
-    for (const film of this.filmLocations) {
-      this.markers.push({
-        position: { lat: +film.latitude!, lng: +film.longitude! },
-        film: film
-      } as Marker);
-    }
+  get actorList(): (string | undefined)[] {
+    return [
+      this.selectedLocation!.actor1,
+      this.selectedLocation!.actor2,
+      this.selectedLocation!.actor3
+    ].filter((actor) => !!actor);
   }
 
   onMarkerClick(marker: Marker) {
@@ -83,16 +89,5 @@ export class MapComponent {
       width: '600px',
       data: { filmLocation: this.selectedLocation }
     });
-  }
-
-  adjustMapCenter(): void {
-    this.center = {
-      lat:
-        this.filmLocations.reduce((sum, film) => sum + film.latitude!, 0) /
-        this.filmLocations.length,
-      lng:
-        this.filmLocations.reduce((sum, film) => sum + film.longitude!, 0) /
-        this.filmLocations.length
-    };
   }
 }

@@ -1,7 +1,7 @@
 <app-top-bar></app-top-bar>
-<app-loading-spinner *ngIf="loading"></app-loading-spinner>
+<app-loading-spinner *ngIf="loading$ | async"></app-loading-spinner>
 <main class="main">
-  <mat-card class="content rounded-card" [class.loading]="loading">
+  <mat-card class="content rounded-card" [class.loading]="loading$ | async">
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Search films</mat-label>
       <input
@@ -17,17 +17,20 @@
       </mat-error>
     </mat-form-field>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
-      <ng-container *ngIf="options.length; else noResults">
-        <mat-option *ngFor="let film of options" [value]="film.title">
-          {{ film.title }}
-        </mat-option>
+      <ng-container *ngIf="options$ | async as options">
+        <ng-container *ngIf="options.length; else noResults">
+          <mat-option *ngFor="let film of options$ | async" [value]="film.title">
+            {{ film.title }}
+          </mat-option>
+        </ng-container>
       </ng-container>
+
       <ng-template #noResults>
-        <mat-option disabled *ngIf="searchControl.value?.trim() && !loading">
+        <mat-option disabled *ngIf="searchControl.value?.trim() && !(loading$ | async)">
           Oops. There aren't any films matching your search.
         </mat-option>
       </ng-template>
     </mat-autocomplete>
-    <app-map [filmLocations]="filteredFilmLocations"></app-map>
+    <app-map [filmLocations$]="filteredFilmLocations$"></app-map>
   </mat-card>
 </main>

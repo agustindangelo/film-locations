@@ -4,7 +4,18 @@ import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent
 } from '@angular/material/autocomplete';
-import { catchError, debounceTime, distinctUntilChanged, filter, finalize, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  finalize,
+  map,
+  of,
+  switchMap,
+  BehaviorSubject,
+  shareReplay
+} from 'rxjs';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FilmsService } from './services/films.service';
 import { Film } from './models/Film';
@@ -34,47 +45,40 @@ import { GoogleMapsModule } from '@angular/google-maps';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  searchControl = new FormControl('', [Validators.maxLength(45)]);
-  searchResults: Film[] = [];
-  filmLocations: Film[] = [];
-  filteredFilmLocations: Film[] = [];
-  options: Film[] = [];
-  loading = false;
-
   private filmsService = inject(FilmsService);
+  private selectedTitle$ = new BehaviorSubject<string | null>(null);
+  searchControl = new FormControl('', [Validators.maxLength(45)]);
+  loading$ = new BehaviorSubject<boolean>(false);
 
-  ngOnInit() {
-    this.setupSearchSubscription();
-  }
+  filmLocations$ = this.searchControl.valueChanges.pipe(
+    debounceTime(500),
+    distinctUntilChanged(),
+    filter((query) => !!query && query.trim().length > 0),
+    switchMap((query) => {
+      this.loading$.next(true);
+      return this.filmsService.search(query!).pipe(
+        catchError(() => {
+          return of([]);
+        }),
+        finalize(() => this.loading$.next(false))
+      );
+    }),
+    shareReplay(1)
+  );
 
-  setupSearchSubscription() {
-    this.searchControl.valueChanges
-      .pipe(
-        debounceTime(500),
-        distinctUntilChanged(),
-        filter((query) => !!query && query.trim().length > 0)
+  options$ = this.filmLocations$.pipe(map(this.filterOutDuplicates));
+
+  filteredFilmLocations$ = this.filmLocations$.pipe(
+    switchMap((locations) =>
+      this.selectedTitle$.pipe(
+        map((title) => (title ? locations.filter((location) => location.title === title) : []))
       )
-      .subscribe((query) => {
-        this.loading = true;
-        this.filmsService
-          .search(query!)
-          .pipe(
-            catchError((err) => {
-              console.error('Search error', err);
-              return of([]);
-            }),
-            finalize(() => (this.loading = false))
-          )
-          .subscribe((data) => {
-            this.filmLocations = data as Film[];
-            this.options = this.getUniqueResults(this.filmLocations);
-          });
-      });
-  }
+    )
+  );
 
-  getUniqueResults(results: Film[]): Film[] {
+  filterOutDuplicates(array: Film[]) {
     const uniqueTitles = new Set();
-    return results.filter((film) => {
+    return array.filter((film) => {
       if (uniqueTitles.has(film.title)) {
         return false;
       }
@@ -85,10 +89,7 @@ export class AppComponent {
 
   onOptionSelected(event: MatAutocompleteSelectedEvent): void {
     const selectedTitle = event.option.value;
-    this.searchControl.setValue(selectedTitle, { emitEvent: true });
-    this.filteredFilmLocations = this.filmLocations.filter(
-      (location) => location.title === selectedTitle
-    );
-    console.log('filtered', this.filteredFilmLocations);
+    this.searchControl.setValue(selectedTitle, { emitEvent: false });
+    this.selectedTitle$.next(selectedTitle);
   }
 }
