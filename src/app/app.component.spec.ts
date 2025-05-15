@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { FilmsService } from './services/films.service';
-import { of, throwError } from 'rxjs';
+import { of, throwError, firstValueFrom } from 'rxjs';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
@@ -41,40 +41,41 @@ describe('AppComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('setupSearchSubscription', () => {
-    it('should call search and set filmLocations and options on valid input', fakeAsync(() => {
+  describe('search locations functionality', () => {
+    it('should call search and emit film locations on valid input', fakeAsync(async () => {
       filmsServiceSpy.search.and.returnValue(of(mockFilmLocations));
 
       component.searchControl.setValue('Inception');
       tick(500);
 
+      const result = await firstValueFrom(component.filmLocations$);
       expect(filmsServiceSpy.search).toHaveBeenCalledWith('Inception');
-      expect(component.filmLocations).toEqual(mockFilmLocations);
-      expect(component.options.length).toBe(2);
-      expect(component.loading).toBeFalse();
+      expect(result).toEqual(mockFilmLocations);
     }));
 
-    it('should handle search errors gracefully', fakeAsync(() => {
+    it('should handle search errors gracefully', fakeAsync(async () => {
       filmsServiceSpy.search.and.returnValue(throwError(() => new Error('error')));
 
       component.searchControl.setValue('ErrorMovie');
       tick(500);
 
+      const result = await firstValueFrom(component.filmLocations$);
       expect(filmsServiceSpy.search).toHaveBeenCalledWith('ErrorMovie');
-      expect(component.filmLocations).toEqual([]);
-      expect(component.options).toEqual([]);
-      expect(component.loading).toBeFalse();
+      expect(result).toEqual([]);
     }));
 
-    it('should not call search if input is empty', fakeAsync(() => {
+    it('should not call search if input is empty or whitespace', fakeAsync(() => {
       component.searchControl.setValue('');
+      tick(500);
+
+      component.searchControl.setValue('   ');
       tick(500);
 
       expect(filmsServiceSpy.search).not.toHaveBeenCalled();
     }));
   });
 
-  describe('getUniqueResults', () => {
+  describe('filtering out of duplicates', () => {
     it('should filter out duplicate film titles', () => {
       const results: Film[] = [
         mockFilmLocations[0],
@@ -82,21 +83,37 @@ describe('AppComponent', () => {
         mockFilmLocations[0],
         mockFilmLocations[1]
       ];
-      const unique = component.getUniqueResults(results);
+      const unique = component.filterOutDuplicates(results);
       expect(unique.length).toBe(2);
       expect(unique.map((f) => f.title)).toEqual(['Inception', 'The Dark Knight']);
     });
   });
 
-  describe('onOptionSelected', () => {
-    it('should filter filmLocations based on selected title', () => {
-      component.filmLocations = mockFilmLocations;
+  describe('option selection functionality', () => {
+    it('should update selectedTitle$ and not emit a new search', fakeAsync(async () => {
+      filmsServiceSpy.search.and.returnValue(of(mockFilmLocations));
+      component.searchControl.setValue('Inception');
+      tick(500);
+
+      const event = { option: { value: 'Inception' } } as any;
+      spyOn(component['selectedTitle$'], 'next');
+      component.onOptionSelected(event);
+
+      expect(component['selectedTitle$'].next).toHaveBeenCalledWith('Inception');
+      expect(filmsServiceSpy.search).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should filter filmLocations based on selected title', fakeAsync(async () => {
+      filmsServiceSpy.search.and.returnValue(of(mockFilmLocations));
+      component.searchControl.setValue('Inception');
+      tick(500);
 
       const event = { option: { value: 'Inception' } } as any;
       component.onOptionSelected(event);
 
-      expect(component.filteredFilmLocations.length).toBe(1);
-      expect(component.filteredFilmLocations[0].title).toBe('Inception');
-    });
+      const filtered = await firstValueFrom(component.filteredFilmLocations$);
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].title).toBe('Inception');
+    }));
   });
 });

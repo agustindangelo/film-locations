@@ -5,6 +5,7 @@ import { GoogleMapsLoaderService } from '../../services/google-maps-loader.servi
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import mockFilmLocations from '../../static/mockFilmLocations';
 import { CommonModule } from '@angular/common';
+import { of } from 'rxjs';
 
 describe('MapComponent', () => {
   let component: MapComponent;
@@ -41,15 +42,27 @@ describe('MapComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('ngOnChanges', () => {
-    it('should update markers and center when filmLocations change', () => {
-      component.filmLocations = mockFilmLocations;
-      const changes = {
-        filmLocations: { currentValue: component.filmLocations, firstChange: false }
-      } as any;
+  describe('markers functionality', () => {
+    it('should create markers based on filmLocations$', fakeAsync(async () => {
+      component.filmLocations$ = of(mockFilmLocations);
 
-      component.ngOnChanges(changes);
+      await component.ngOnInit();
+      let markers: any[] = [];
+      component.markers$.subscribe((m) => (markers = m));
 
+      expect(markers.length).toBe(mockFilmLocations.length);
+      mockFilmLocations.forEach((filmLocation, idx) => {
+        expect(markers[idx].position.lat).toBe(filmLocation.latitude!);
+        expect(markers[idx].position.lng).toBe(filmLocation.longitude!);
+      });
+    }));
+  });
+
+  describe('update center of map', () => {
+    it('should update center when filmLocations$ emits', fakeAsync(async () => {
+      component.filmLocations$ = of(mockFilmLocations);
+
+      await component.ngOnInit();
       const latAvg =
         mockFilmLocations.reduce((sum, location) => sum + location.latitude!, 0) /
         mockFilmLocations.length;
@@ -57,25 +70,9 @@ describe('MapComponent', () => {
         mockFilmLocations.reduce((sum, location) => sum + location.longitude!, 0) /
         mockFilmLocations.length;
 
-      expect(component.markers.length).toBe(2);
       expect(component.center.lat).toBeCloseTo(latAvg);
       expect(component.center.lng).toBeCloseTo(lngAvg);
-    });
-  });
-
-  describe('updateMarkers', () => {
-    it('should create markers based on filmLocations', () => {
-      component.filmLocations = mockFilmLocations;
-
-      component.updateMarkers();
-
-      expect(component.markers.length).toBe(mockFilmLocations.length);
-
-      mockFilmLocations.forEach((filmLocation, idx) => {
-        expect(component.markers[idx].position.lat).toBe(filmLocation.latitude!);
-        expect(component.markers[idx].position.lng).toBe(filmLocation.longitude!);
-      });
-    });
+    }));
   });
 
   describe('actorList getter', () => {
